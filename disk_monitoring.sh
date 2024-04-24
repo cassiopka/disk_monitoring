@@ -50,6 +50,9 @@ USED=$(df -h $DISK | awk 'NR==2{print $3}')
 TOTAL=$(df -h $DISK | awk 'NR==2{print $2}')
 FREE=$(df -h $DISK | awk 'NR==2{print $4}' | sed 's/G//g')
 
+# Получение информации SMART
+SMART_INFO=$(sudo smartctl -a $DISK | grep -E 'Device Model|Serial Number|Firmware Version|User Capacity|Sector Size|Local Time')
+
 # Проверка наличия свободного места на диске
 if (( $(echo "$FREE < 1.0" | bc -l) )); then
     # Отображение уведомления об ошибке
@@ -65,9 +68,13 @@ else
         notify-send -i disk_usage.png "Disk usage warning" "Disk usage exceeds $THRESHOLD%: $USAGE% ($USED of $TOTAL)"
         # Запись предупреждения в файл журнала
         echo "$(date) [WARNING] Disk usage exceeds $THRESHOLD%: $USAGE% ($USED of $TOTAL) on $(hostname)" | sudo tee -a $LOG_FILE
+        # Запись информации SMART в файл журнала
+        echo "$(date) [WARNING] SMART information for $DISK: $SMART_INFO" | sudo tee -a $LOG_FILE
     else
         # Запись сообщения в файл журнала
         echo "$(date) [INFO] Disk usage is within normal range: $USAGE% ($USED of $TOTAL) on $(hostname)" | sudo tee -a $LOG_FILE
+        # Запись информации SMART в файл журнала
+        echo "$(date) [INFO] SMART information for $DISK: $SMART_INFO" | sudo tee -a $LOG_FILE
         # Отображение уведомления без изображения
         notify-send "Disk usage" "Disk usage is within normal range: $USAGE% ($USED of $TOTAL)"
     fi
