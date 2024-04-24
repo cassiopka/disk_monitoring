@@ -1,2 +1,38 @@
-# disk_monitoring
-This Bash script provides an efficient solution for monitoring disk usage on Linux systems. With customizable threshold values, it alerts users when disk usage exceeds predefined limits, ensuring proactive management of disk space. Additionally, it retrieves SMART information to offer insights into disk health. 
+# Скрипт мониторинга дискового пространства
+
+Этот скрипт на Bash мониторит использование дискового пространства и предоставляет уведомления, когда использование превышает определенный порог. Он также собирает информацию о состоянии S.M.A.R.T. диска.
+
+## Использование
+
+```bash
+./disk_monitoring.sh [-t порог] [-l файл_журнала] [-d диск] [-h]
+```
+
+Опции:
+
+- `-t порог`: Установить значение порога для использования диска (по умолчанию: 80).
+- `-l файл_журнала`: Установить путь к файлу журнала (по умолчанию: /var/log/disk_monitoring.log).
+- `-d диск`: Установить диск для мониторинга (по умолчанию: /).
+- `-h`: Показать сообщение справки.
+
+Требования
+
+- Оболочка Bash
+- `bc` (базовый калькулятор) для вещественной арифметики
+- `smartmontools` для получения информации о S.M.A.R.T.
+- `notify-send` для уведомлений на рабочем столе
+- `ImageMagick` для создания изображений использования диска (требуется только при использовании функции изображения)
+
+Примеры использования
+
+Мониторинг использования диска с настройками по умолчанию:
+
+```bash
+./disk_monitoring.sh
+```
+
+Мониторинг использования диска с пользовательским порогом и файлом журнала:
+
+```bash
+./disk_monitoring.sh -t 90 -l /путь/к/пользовательскому/журналу.log
+```
