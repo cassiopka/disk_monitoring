@@ -1,7 +1,30 @@
 #!/bin/bash
 
-# Путь к файлу журнала
-LOG_FILE="/var/log/disk_monitoring.log"
+# Обработка аргументов командной строки
+while getopts "t:l:" opt; do
+  case $opt in
+    t)
+      THRESHOLD="$OPTARG"
+      ;;
+    l)
+      LOG_FILE="$OPTARG"
+      ;;
+    \?)
+      echo "Invalid option: -$OPTARG" >&2
+      exit 1
+      ;;
+  esac
+done
+
+# Проверка, установлено ли пороговое значение
+if [ -z "$THRESHOLD" ]; then
+  THRESHOLD=80
+fi
+
+# Проверка, указан ли путь к файлу журнала
+if [ -z "$LOG_FILE" ]; then
+  LOG_FILE="/var/log/disk_monitoring.log"
+fi
 
 # Получение информации о диске
 USAGE=$(df -h / | awk 'NR==2{print $5}' | sed 's/%//')
@@ -17,13 +40,13 @@ if (( $(echo "$FREE < 1.0" | bc -l) )); then
     echo "$(date) [ERROR] Not enough free space on disk: $FREE GB on $(hostname)" | sudo tee -a $LOG_FILE
 else
     # Проверка использования диска
-    if [ $USAGE -gt 80 ]; then
+    if [ $USAGE -gt $THRESHOLD ]; then
         # Создание изображения с информацией о диске
         convert -size 200x100 xc:white -fill black -pointsize 18 -draw "text 10,30 'Disk usage:' text 10,60 '$USAGE% ($USED of $TOTAL)'" disk_usage.png
         # Отображение уведомления с изображением
-        notify-send -i disk_usage.png "Disk usage warning" "Disk usage exceeds 80%: $USAGE% ($USED of $TOTAL)"
+        notify-send -i disk_usage.png "Disk usage warning" "Disk usage exceeds $THRESHOLD%: $USAGE% ($USED of $TOTAL)"
         # Запись предупреждения в файл журнала
-        echo "$(date) [WARNING] Disk usage exceeds 80%: $USAGE% ($USED of $TOTAL) on $(hostname)" | sudo tee -a $LOG_FILE
+        echo "$(date) [WARNING] Disk usage exceeds $THRESHOLD%: $USAGE% ($USED of $TOTAL) on $(hostname)" | sudo tee -a $LOG_FILE
     else
         # Запись сообщения в файл журнала
         echo "$(date) [INFO] Disk usage is within normal range: $USAGE% ($USED of $TOTAL) on $(hostname)" | sudo tee -a $LOG_FILE
