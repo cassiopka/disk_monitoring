@@ -1,13 +1,26 @@
 #!/bin/bash
 
 # Обработка аргументов командной строки
-while getopts "t:l:" opt; do
+while getopts "t:l:d:h" opt; do
   case $opt in
     t)
       THRESHOLD="$OPTARG"
       ;;
     l)
       LOG_FILE="$OPTARG"
+      ;;
+    d)
+      DISK="$OPTARG"
+      ;;
+    h)
+      # Отображение справки
+      echo "Usage: $0 [-t threshold] [-l logfile] [-d disk]"
+      echo "Options:"
+      echo "  -t threshold  Set the threshold value for disk usage (default: 80)"
+      echo "  -l logfile    Set the path to the log file (default: /var/log/disk_monitoring.log)"
+      echo "  -d disk       Set the disk to be monitored (default: /)"
+      echo "  -h            Show this help message"
+      exit 0
       ;;
     \?)
       echo "Invalid option: -$OPTARG" >&2
@@ -26,11 +39,16 @@ if [ -z "$LOG_FILE" ]; then
   LOG_FILE="/var/log/disk_monitoring.log"
 fi
 
+# Проверка, указан ли диск
+if [ -z "$DISK" ]; then
+  DISK="/"
+fi
+
 # Получение информации о диске
-USAGE=$(df -h / | awk 'NR==2{print $5}' | sed 's/%//')
-USED=$(df -h / | awk 'NR==2{print $3}')
-TOTAL=$(df -h / | awk 'NR==2{print $2}')
-FREE=$(df -h / | awk 'NR==2{print $4}' | sed 's/G//g')
+USAGE=$(df -h $DISK | awk 'NR==2{print $5}' | sed 's/%//')
+USED=$(df -h $DISK | awk 'NR==2{print $3}')
+TOTAL=$(df -h $DISK | awk 'NR==2{print $2}')
+FREE=$(df -h $DISK | awk 'NR==2{print $4}' | sed 's/G//g')
 
 # Проверка наличия свободного места на диске
 if (( $(echo "$FREE < 1.0" | bc -l) )); then
